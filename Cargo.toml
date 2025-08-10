@@ -1,0 +1,16 @@
+[package]
+name = "uw"
+version = "1.0.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.43", features = ["derive"] }
+trust-dns-resolver = "0.23.2"
+colored = "2.1.0"
+terminal_size = "0.4"
+unicode-width = "0.1"
+reqwest = { version = "0.12", features = ["blocking", "cookies"] }
+regex = "1.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rpassword = "7.0"
