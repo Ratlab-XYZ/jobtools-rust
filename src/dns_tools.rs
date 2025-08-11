@@ -50,56 +50,90 @@ fn query_dns(domain: &str, record_type: &str) {
     let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default())
         .expect("Failed to create resolver");
 
-    //println!("{}", format!("━━━━━━━━ {} Records ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", record_type).bright_black());
     print_header(record_type);
+
     match record_type {
         "A" => {
             if let Ok(response) = resolver.ipv4_lookup(domain) {
-                for ip in response {
-                    print_record(domain, record_type, ip.to_string().green());
+                let results: Vec<_> = response.iter().collect();
+                if !results.is_empty() {
+                    for ip in results {
+                        print_record(domain, record_type, ip.to_string().green());
+                    }
+                } else {
+                    print_soa(&resolver, domain);
                 }
+            } else {
+                print_soa(&resolver, domain);
             }
         }
         "MX" => {
             if let Ok(response) = resolver.mx_lookup(domain) {
-                for mx in response {
-                    let val = format!("{} {}", mx.preference(), mx.exchange());
-                    print_record(domain, record_type, val.cyan());
+                let results: Vec<_> = response.iter().collect();
+                if !results.is_empty() {
+                    for mx in results {
+                        let val = format!("{} {}", mx.preference(), mx.exchange());
+                        print_record(domain, record_type, val.cyan());
+                    }
+                } else {
+                    print_soa(&resolver, domain);
                 }
+            } else {
+                print_soa(&resolver, domain);
             }
         }
         "TXT" => {
             if let Ok(response) = resolver.txt_lookup(domain) {
-                for txt in response {
-                    let joined = txt
-                        .iter()
-                        .map(|s| String::from_utf8_lossy(s).to_string())
-                        .collect::<Vec<_>>()
-                        .join(" ");
-                    print_record(domain, record_type, joined.red());
+                let results: Vec<_> = response.iter().collect();
+                if !results.is_empty() {
+                    for txt in results {
+                        let joined = txt
+                            .iter()
+                            .map(|s| String::from_utf8_lossy(s).to_string())
+                            .collect::<Vec<_>>()
+                            .join(" ");
+                        print_record(domain, record_type, joined.red());
+                    }
+                } else {
+                    print_soa(&resolver, domain);
                 }
+            } else {
+                print_soa(&resolver, domain);
             }
         }
         "NS" => {
             if let Ok(response) = resolver.ns_lookup(domain) {
-                for ns in response {
-                    print_record(domain, record_type, ns.to_string().yellow());
+                let results: Vec<_> = response.iter().collect();
+                if !results.is_empty() {
+                    for ns in results {
+                        print_record(domain, record_type, ns.to_string().yellow());
+                    }
+                } else {
+                    print_soa(&resolver, domain);
                 }
+            } else {
+                print_soa(&resolver, domain);
             }
         }
         "SOA" => {
-            if let Ok(response) = resolver.soa_lookup(domain) {
-                for soa in response {
-                    let val = format!(
-                        "{} {} {} {} {} {} {}",
-                        soa.mname(), soa.rname(), soa.serial(),
-                        soa.refresh(), soa.retry(), soa.expire(), soa.minimum()
-                    );
-                    print_record(domain, record_type, val.dimmed().yellow());
-                }
-            }
+            print_soa(&resolver, domain);
         }
         _ => {}
+    }
+}
+
+fn print_soa(resolver: &Resolver, domain: &str) {
+    if let Ok(response) = resolver.soa_lookup(domain) {
+        for soa in response {
+            let val = format!(
+                "{} {} {} {} {} {} {}",
+                soa.mname(), soa.rname(), soa.serial(),
+                soa.refresh(), soa.retry(), soa.expire(), soa.minimum()
+            );
+            print_record(domain, "SOA", val.dimmed().yellow());
+        }
+    } else {
+        println!("{}", "SOA lookup failed".red());
     }
 }
 
